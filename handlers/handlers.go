@@ -11,53 +11,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func HandleMenu(db *sql.DB, scanner *bufio.Scanner) {
-	for {
-		fmt.Println("Menu:")
-		fmt.Println("1. Register")
-		fmt.Println("2. Login")
-		fmt.Println("3. List Laptops")
-		fmt.Println("4. Buy")
-		fmt.Println("5. Edit User")
-		fmt.Println("6. Delete User")
-		fmt.Println("7. User Report")
-		fmt.Println("8. Order Report")
-		fmt.Println("9. Laptop Stock Report")
-		fmt.Println("0. Exit")
-		fmt.Print("Select an option: ")
-
-		scanner.Scan()
-		choice := scanner.Text()
-
-		switch choice {
-		case "1":
-			registerUser(db, scanner)
-		case "2":
-			loginUser(db, scanner)
-		case "3":
-			listLaptops(db)
-		case "4":
-			buyLaptop(db, scanner)
-		case "5":
-			editUser(db, scanner)
-		case "6":
-			deleteUser(db, scanner)
-		case "7":
-			printUserReport(db, scanner)
-		case "8":
-			printOrderReport(db, scanner)
-		case "9":
-			printStockLaptopReport(db, scanner)
-		case "0":
-			fmt.Println("Goodbye!")
-			return
-		default:
-			fmt.Println("Invalid choice. Please select a valid option.")
-		}
-	}
-}
-
-func registerUser(db *sql.DB, scanner *bufio.Scanner) {
+func RegisterUser(db *sql.DB, scanner *bufio.Scanner) {
 	fmt.Println("Register")
 	fmt.Println("--------")
 
@@ -88,13 +42,6 @@ func registerUser(db *sql.DB, scanner *bufio.Scanner) {
 		log.Fatal(err)
 	}
 
-	// Insert data ke tabel Users
-	_, err = db.Exec("INSERT INTO Users (username, email, password, created_at) VALUES (?, ?, ?, ?)",
-		username, email, hashedPassword, createdAt)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	// Ambil user_id yang baru saja di-generate
 	var userID int
 	err = db.QueryRow("SELECT LAST_INSERT_ID()").Scan(&userID)
@@ -103,7 +50,7 @@ func registerUser(db *sql.DB, scanner *bufio.Scanner) {
 	}
 
 	// Insert data ke tabel user_profiles dan menghubungkannya dengan user_id
-	_, err = db.Exec("INSERT INTO user_profiles (user_id, full_name) VALUES (?, ?)",
+	_, err = db.Exec("INSERT INTO User_Profiles (user_id, full_name) VALUES (?, ?)",
 		userID, "Default Full Name")
 	if err != nil {
 		log.Fatal(err)
@@ -112,7 +59,7 @@ func registerUser(db *sql.DB, scanner *bufio.Scanner) {
 	fmt.Println("User registered successfully!")
 }
 
-func loginUser(db *sql.DB, scanner *bufio.Scanner) {
+func LoginUser(db *sql.DB, scanner *bufio.Scanner) {
 	fmt.Println("Login")
 	fmt.Println("-----")
 
@@ -139,7 +86,7 @@ func loginUser(db *sql.DB, scanner *bufio.Scanner) {
 	fmt.Println("Login successful!")
 }
 
-func listLaptops(db *sql.DB) {
+func ListLaptops(db *sql.DB) {
 	fmt.Println("List Laptops")
 	fmt.Println("------------")
 
@@ -165,7 +112,7 @@ func listLaptops(db *sql.DB) {
 	}
 }
 
-func buyLaptop(db *sql.DB, scanner *bufio.Scanner) {
+func BuyLaptop(db *sql.DB, scanner *bufio.Scanner) {
 	fmt.Println("Buy Laptop")
 	fmt.Println("----------")
 
@@ -177,7 +124,7 @@ func buyLaptop(db *sql.DB, scanner *bufio.Scanner) {
 		log.Fatal(err)
 	}
 
-	listLaptops(db)
+	ListLaptops(db)
 
 	fmt.Print("Enter laptop ID to buy: ")
 	scanner.Scan()
@@ -211,7 +158,7 @@ func buyLaptop(db *sql.DB, scanner *bufio.Scanner) {
 	// Insert data ke tabel order_items
 	quantity := 1 // Jumlah item yang dibeli, bisa disesuaikan
 	subtotal := laptopPrice
-	_, err = db.Exec("INSERT INTO order_items (order_id, laptop_id, quantity, subtotal) VALUES (?, ?, ?, ?)",
+	_, err = db.Exec("INSERT INTO Order_Items (order_id, laptop_id, quantity, subtotal) VALUES (?, ?, ?, ?)",
 		orderID, laptopID, quantity, subtotal)
 	if err != nil {
 		log.Fatal(err)
@@ -220,7 +167,7 @@ func buyLaptop(db *sql.DB, scanner *bufio.Scanner) {
 	fmt.Println("Laptop purchased successfully!")
 }
 
-func editUser(db *sql.DB, scanner *bufio.Scanner) {
+func EditUser(db *sql.DB, scanner *bufio.Scanner) {
 	fmt.Println("Edit User")
 	fmt.Println("---------")
 
@@ -252,7 +199,7 @@ func editUser(db *sql.DB, scanner *bufio.Scanner) {
 		log.Fatal(err)
 	}
 
-	_, err = db.Exec("UPDATE user_profiles SET full_name = ?, address = ?, phone_number = ?, birthdate = ? WHERE user_id = ?",
+	_, err = db.Exec("UPDATE User_Profiles SET full_name = ?, address = ?, phone_number = ?, birthdate = ? WHERE user_id = ?",
 		fullName, address, phoneNumber, birthdate, userID)
 	if err != nil {
 		log.Fatal(err)
@@ -261,7 +208,7 @@ func editUser(db *sql.DB, scanner *bufio.Scanner) {
 	fmt.Println("User information updated successfully!")
 }
 
-func deleteUser(db *sql.DB, scanner *bufio.Scanner) {
+func DeleteUser(db *sql.DB, scanner *bufio.Scanner) {
 	fmt.Println("Delete User")
 	fmt.Println("-----------")
 
@@ -281,7 +228,7 @@ func deleteUser(db *sql.DB, scanner *bufio.Scanner) {
 	fmt.Println("User deleted successfully!")
 }
 
-func printUserReport(db *sql.DB, scanner *bufio.Scanner) {
+func PrintUserReport(db *sql.DB, scanner *bufio.Scanner) {
 	rows, err := db.Query("SELECT user_id, username, email, created_at FROM users")
 	if err != nil {
 		log.Fatal(err)
@@ -304,7 +251,7 @@ func printUserReport(db *sql.DB, scanner *bufio.Scanner) {
 	fmt.Println("-----------------------------------------------------------------")
 }
 
-func printOrderReport(db *sql.DB, scanner *bufio.Scanner) {
+func PrintOrderReport(db *sql.DB, scanner *bufio.Scanner) {
 	rows, err := db.Query("SELECT orders.order_id, users.username, orders.order_date, orders.total_amount FROM orders INNER JOIN users ON orders.user_id = users.user_id")
 	if err != nil {
 		log.Fatal(err)
@@ -328,7 +275,7 @@ func printOrderReport(db *sql.DB, scanner *bufio.Scanner) {
 	fmt.Println("------------------------------------------------------------------------------------------------")
 }
 
-func printStockLaptopReport(db *sql.DB, scanner *bufio.Scanner) {
+func PrintStockLaptopReport(db *sql.DB, scanner *bufio.Scanner) {
 	rows, err := db.Query("SELECT laptop_id, brand, model, stock_quantity FROM laptops")
 	if err != nil {
 		log.Fatal(err)

@@ -1,8 +1,8 @@
 package main
 
 import (
+	"FINAL_PROJECT_PHASE1/cli"
 	"FINAL_PROJECT_PHASE1/database"
-	"FINAL_PROJECT_PHASE1/handlers"
 	"bufio"
 	"fmt"
 	"log"
@@ -23,5 +23,5 @@ func main() {
 	fmt.Println("Welcome to E-commerce CLI")
 	fmt.Println("-------------------------")
 
-	handlers.HandleMenu(db, scanner)
+	cli.HandleMenu(db, scanner)
 }
