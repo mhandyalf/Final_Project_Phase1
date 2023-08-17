@@ -59,7 +59,7 @@ func RegisterUser(db *sql.DB, scanner *bufio.Scanner) {
 	fmt.Println("User registered successfully!")
 }
 
-func LoginUser(db *sql.DB, scanner *bufio.Scanner) {
+func LoginUser(db *sql.DB, scanner *bufio.Scanner) bool {
 	fmt.Println("Login")
 	fmt.Println("-----")
 
@@ -75,15 +75,18 @@ func LoginUser(db *sql.DB, scanner *bufio.Scanner) {
 	var userID int
 	err := db.QueryRow("SELECT user_id, password FROM Users WHERE username = ?", username).Scan(&userID, &storedPassword)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Login failed:", err)
+		return false
 	}
 
 	// Memeriksa apakah password cocok dengan hashed password yang disimpan
 	if err := bcrypt.CompareHashAndPassword(storedPassword, []byte(password)); err != nil {
-		log.Fatal("Login failed: Incorrect username or password")
+		log.Println("Login failed:", err)
+		return false
 	}
 
 	fmt.Println("Login successful!")
+	return true
 }
 
 func ListLaptops(db *sql.DB) {
