@@ -143,10 +143,21 @@ func BuyLaptop(db *sql.DB, scanner *bufio.Scanner) {
 		log.Fatal(err)
 	}
 
+	fmt.Print("Enter quantity: ")
+	scanner.Scan()
+	quantityStr := scanner.Text()
+	quantity, err := strconv.Atoi(quantityStr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Calculate subtotal
+	subtotal := laptopPrice * float64(quantity)
+
 	// Insert data ke tabel Orders
 	orderDate := time.Now()
 	_, err = db.Exec("INSERT INTO Orders (user_id, order_date, total_amount) VALUES (?, ?, ?)",
-		userID, orderDate, laptopPrice)
+		userID, orderDate, subtotal)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -158,9 +169,27 @@ func BuyLaptop(db *sql.DB, scanner *bufio.Scanner) {
 		log.Fatal(err)
 	}
 
+	// Mengambil informasi stok laptop dari database
+	var laptopStock int
+	err = db.QueryRow("SELECT stock_quantity FROM Laptops WHERE laptop_id = ?", laptopID).Scan(&laptopStock)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Memastikan stok cukup untuk pembelian
+	if laptopStock < quantity {
+		fmt.Println("Not enough stock available!")
+		return
+	}
+
+	// Mengurangi stok laptop
+	newStock := laptopStock - quantity
+	_, err = db.Exec("UPDATE Laptops SET stock_quantity = ? WHERE laptop_id = ?", newStock, laptopID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Insert data ke tabel order_items
-	quantity := 1 // Jumlah item yang dibeli, bisa disesuaikan
-	subtotal := laptopPrice
 	_, err = db.Exec("INSERT INTO Order_Items (order_id, laptop_id, quantity, subtotal) VALUES (?, ?, ?, ?)",
 		orderID, laptopID, quantity, subtotal)
 	if err != nil {
@@ -223,6 +252,13 @@ func DeleteUser(db *sql.DB, scanner *bufio.Scanner) {
 		log.Fatal(err)
 	}
 
+	// Hapus data terkait dari tabel user_profiles
+	_, err = db.Exec("DELETE FROM User_Profiles WHERE user_id = ?", userID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Hapus user dari tabel Users
 	_, err = db.Exec("DELETE FROM Users WHERE user_id = ?", userID)
 	if err != nil {
 		log.Fatal(err)
